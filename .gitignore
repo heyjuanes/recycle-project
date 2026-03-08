@@ -1,0 +1,39 @@
+﻿# Modelo entrenado (se gestiona como artefacto en MLflow)
+*.pt
+*.h5
+*.onnx
+*.pkl
+
+# Entorno virtual
+venv/
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# Datos crudos (pueden ser pesados)
+data/raw/
+data/processed/
+
+# VS Code
+.vscode/
+
+# pytest
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Docker
+*.log
