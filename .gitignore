@@ -37,3 +37,5 @@ htmlcov/
 
 # Docker
 *.log
+hi.py
+abrir_terminal.bat
