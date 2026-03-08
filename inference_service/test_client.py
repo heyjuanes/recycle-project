@@ -4,8 +4,8 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "proto"))
 
 import grpc
-import recycling_pb2
-import recycling_pb2_grpc
+import recycling_pb2 # type: ignore
+import recycling_pb2_grpc # type: ignore
 
 
 def test_connection():

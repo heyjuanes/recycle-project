@@ -9,8 +9,8 @@ from concurrent import futures
 from PIL import Image
 from ultralytics import YOLO
 
-import recycling_pb2
-import recycling_pb2_grpc
+import recycling_pb2 # type: ignore
+import recycling_pb2_grpc # type: ignore
 from material_classifier import get_material
 
 MODEL_PATH = "yolov8n.pt"
@@ -78,7 +78,11 @@ class RecyclingInferenceServicer(recycling_pb2_grpc.RecyclingInferenceServicer):
 
 def serve():
     """Inicia el servidor gRPC en el puerto 50051."""
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
+    options = [
+        ("grpc.max_receive_message_length", 20 * 1024 * 1024),
+        ("grpc.max_send_message_length", 20 * 1024 * 1024),
+    ]
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=4), options=options)
     recycling_pb2_grpc.add_RecyclingInferenceServicer_to_server(
         RecyclingInferenceServicer(), server
     )
