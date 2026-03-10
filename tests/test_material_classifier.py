@@ -3,7 +3,7 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "inference_service"))
 
-from material_classifier import get_material
+from material_classifier import get_material # type: ignore
 
 
 def test_bottle_es_plastico():

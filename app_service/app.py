@@ -8,8 +8,8 @@ import grpc
 import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
 
-import recycling_pb2
-import recycling_pb2_grpc
+import recycling_pb2 # type: ignore
+import recycling_pb2_grpc # type: ignore
 
 GRPC_HOST = "localhost:50051"
 
