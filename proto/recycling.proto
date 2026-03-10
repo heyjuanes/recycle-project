@@ -7,10 +7,7 @@
  *
  * Para regenerar el codigo Python desde este archivo ejecutar:
  * python -m grpc_tools.protoc -I proto --python_out=proto --grpc_python_out=proto proto/recycling.proto
- *
- * Autor: Marco Antonio Acosta, Juan Sebastian Espitia, Geraldine Filigrana
- * Asignatura: Desarrollo de Proyectos de IA
- * Universidad Autonoma de Occidente
+
  */
 
 syntax = "proto3";

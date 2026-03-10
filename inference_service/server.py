@@ -16,7 +16,7 @@ import io
 import grpc
 from concurrent import futures
 from PIL import Image
-from ultralytics import YOLO
+from ultralytics import YOLO #lib para recuperar modelo
 
 import recycling_pb2 # type: ignore
 import recycling_pb2_grpc # type: ignore
