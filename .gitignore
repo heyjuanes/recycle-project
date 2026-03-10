@@ -21,6 +21,7 @@ __pycache__/
 
 # MLflow
 mlruns/
+mlflow.db
 mlartifacts/
 
 # Datos crudos (pueden ser pesados)

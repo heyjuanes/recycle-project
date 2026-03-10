@@ -1,27 +1,65 @@
+/*
+ * recycling.proto
+ *
+ * Define el contrato de comunicacion gRPC entre app_service (cliente)
+ * e inference_service (servidor) para el sistema de deteccion de
+ * material reciclable.
+ *
+ * Para regenerar el codigo Python desde este archivo ejecutar:
+ * python -m grpc_tools.protoc -I proto --python_out=proto --grpc_python_out=proto proto/recycling.proto
+ *
+ * Autor: Marco Antonio Acosta, Juan Sebastian Espitia, Geraldine Filigrana
+ * Asignatura: Desarrollo de Proyectos de IA
+ * Universidad Autonoma de Occidente
+ */
+
 syntax = "proto3";
 
 package recycling;
 
+/*
+ * Servicio principal de inferencia de reciclaje.
+ * Expone un unico metodo RPC para deteccion de objetos.
+ */
 service RecyclingInference {
+  /*
+   * Recibe una imagen en bytes y retorna los objetos detectados
+   * con su clasificacion de material reciclable.
+   */
   rpc DetectObjects (DetectionRequest) returns (DetectionResponse);
 }
 
+/*
+ * Mensaje de solicitud de deteccion.
+ * Contiene la imagen codificada en bytes para ser procesada
+ * por el modelo YOLOv8n.
+ */
 message DetectionRequest {
-  bytes image_data = 1;
+  bytes image_data = 1; // Imagen codificada en bytes (JPEG o PNG)
 }
 
+/*
+ * Representa un objeto individual detectado en la imagen.
+ * Contiene la clase, confianza, coordenadas del bounding box
+ * y la categoria de material reciclable asignada.
+ */
 message DetectedObject {
-  string class_name = 1;
-  float confidence = 2;
-  float x1 = 3;
-  float y1 = 4;
-  float x2 = 5;
-  float y2 = 6;
-  string material = 7;
+  string class_name  = 1; // Nombre de la clase detectada por YOLOv8 (ej: 'bottle')
+  float  confidence  = 2; // Nivel de confianza de la deteccion (0.0 a 1.0)
+  float  x1          = 3; // Coordenada X superior izquierda del bounding box
+  float  y1          = 4; // Coordenada Y superior izquierda del bounding box
+  float  x2          = 5; // Coordenada X inferior derecha del bounding box
+  float  y2          = 6; // Coordenada Y inferior derecha del bounding box
+  string material    = 7; // Material reciclable: plastico, metal, vidrio, carton
 }
 
+/*
+ * Mensaje de respuesta con los resultados de la deteccion.
+ * Contiene la lista de objetos detectados, un indicador de exito
+ * y un mensaje descriptivo del resultado o del error.
+ */
 message DetectionResponse {
-  repeated DetectedObject objects = 1;
-  bool success = 2;
-  string message = 3;
+  repeated DetectedObject objects = 1; // Lista de objetos detectados en la imagen
+  bool   success                  = 2; // True si la inferencia fue exitosa
+  string message                  = 3; // Descripcion del resultado o mensaje de error
 }
