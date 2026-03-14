@@ -12,7 +12,7 @@ Uso:
 
     La interfaz estara disponible en: http://localhost:8501
 
-Autor: Marco Antonio Acosta, Juan Esteban Espitia, Geraldine Filigrana
+Autor: Marco Antonio Acosta, Juan Esteban Espitia, Geraldine Filigrana, Julian Lopez
 Asignatura: Desarrollo de Proyectos de IA
 Universidad Autonoma de Occidente
 """
