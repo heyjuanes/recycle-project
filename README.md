@@ -446,7 +446,7 @@ Se eligió **YOLOv8n** porque el proyecto corre en CPU local, priorizando veloci
 | Precision | 68.0% |
 | Recall | 53.2% |
 
-> Fuente: [Ultralytics YOLOv8 Model Card](https://docs.ultralytics.com/models/yolov8/)
+> Fuente:  [Ultralytics YOLOv8 Model Card](https://docs.ultralytics.com/models/yolov8/)
 
 ---
 
