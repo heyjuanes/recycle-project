@@ -10,7 +10,7 @@
 **Asignatura:** Desarrollo de Proyectos de IA  
 **Docente:** Jan Polanco Velasco  
 **Universidad:** Universidad Autónoma de Occidente — Facultad de Ingeniería  
-**Equipo:** Marco Antonio Acosta · Juan Esteban Espitia · Geraldine Filigrana Sánchez  
+**Equipo:** Marco Antonio Acosta · Juan Esteban Espitia · Geraldine Filigrana Sánchez · Julian David Lopez
 **Periodo:** Marzo 2026
 
 ---
