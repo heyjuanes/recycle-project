@@ -5,6 +5,7 @@
 *.pkl
 
 # Entorno virtual
+.venv/
 venv/
 .env
 

@@ -174,27 +174,19 @@ cd recycle-project
 
 **Windows (PowerShell):**
 ```powershell
-python -m venv venv
-venv\Scripts\activate
+uv venv --python 3.11
+.venv\Scripts\activate
 ```
 
 **macOS / Linux:**
 ```bash
-python -m venv venv
-source venv/bin/activate
+uv venv --python 3.11
+source .venv/bin/activate
 ```
 
 ### 3. Instalar dependencias
-
-Se recomienda usar `uv` para instalación más rápida:
-```bash
-pip install uv
+```powershell
 uv pip install -r requirements.txt
-```
-
-O con pip estándar:
-```bash
-pip install -r requirements.txt
 ```
 
 ### 4. Iniciar el servidor gRPC (inference_service)
