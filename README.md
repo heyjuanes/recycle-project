@@ -109,21 +109,18 @@ recycle-project/
 │   ├── recycling_pb2.py        # Código Python generado desde el .proto (mensajes)
 │   └── recycling_pb2_grpc.py   # Código Python generado desde el .proto (servicios)
 ├── notebooks/
-│   ├── download_trashnet.py      # Script de descarga del modelo
 │   └── register_model_mlflow.py  # Registra el modelo en MLflow
 ├── data/
 │   ├── raw/                    # Dataset original sin procesar
 │   └── processed/              # Dataset preprocesado
 ├── tests/
 │   ├── __init__.py
-│   ├── sample_images/          # Imágenes de prueba por clase (glass, plastic, metal, paper, waste)
+│   ├── image_test/             # Imágenes de prueba por clase (glass, plastic, metal, paper, waste)
 │   ├── test_material_classifier.py  # Pruebas del módulo de clasificación
 │   └── test_preprocessing.py        # Pruebas del preprocesamiento de imágenes
 ├── reports/                    # Figuras y métricas del proyecto
 ├── src/
-│   └── __init__.py
-├── .vscode/
-│   └── settings.json           # Configuración de rutas para VS Code
+│   └── __init__.py             # Reservado para módulos adicionales en futuras iteraciones
 ├── .gitignore
 ├── docker-compose.yml
 ├── Dockerfile
@@ -217,8 +214,8 @@ python inference_service/server.py
 
 Deberías ver:
 ```
-Cargando modelo TrashNet v5...
-Modelo TrashNet listo. Clases: ['Glass', 'Metal', 'Paper', 'Plastic', 'Waste']
+Cargando modelo YOLO Waste Detection...
+Modelo listo. Clases: ['Glass', 'Metal', 'Paper', 'Plastic', 'Waste']
 Servidor gRPC corriendo en puerto 50051...
 ```
 
@@ -239,7 +236,7 @@ La aplicación se abrirá automáticamente en: **http://localhost:8501**
 3. El sistema detectará automáticamente los residuos y clasificará su material.
 4. Verás la imagen anotada con bounding boxes y una tabla de resultados.
 
-Puedes usar las imágenes de prueba incluidas en `tests/sample_images/` para verificar el funcionamiento del sistema en cada una de las 5 clases detectables.
+Puedes usar las imágenes de prueba incluidas en `tests/image_test/` para verificar el funcionamiento del sistema.
 
 ---
 
@@ -283,12 +280,12 @@ Módulo de reglas de negocio que mapea las clases detectadas por el modelo a cat
 
 | Clase del modelo | Material | Contenedor | Reciclable |
 |---|---|---|---|
-| `glass` | Vidrio | Verde ♻️ | Sí |
-| `paper` | Papel | Azul ♻️ | Sí |
-| `cardboard` | Cartón | Azul ♻️ | Sí |
-| `plastic` | Plástico | Amarillo ♻️ | Sí |
-| `metal` | Metal | Gris ♻️ | Sí |
-| `trash` / `waste` | Basura general | Negro 🗑️ | No |
+| `Glass` / `glass` | Vidrio | Verde ♻️ | Sí |
+| `Paper` / `paper` / `cardboard` | Cartón/Papel | Azul ♻️ | Sí |
+| `Plastic` / `plastic` / `bottle` | Plástico | Amarillo ♻️ | Sí |
+| `Metal` / `metal` / `scissors` | Metal | Gris ♻️ | Sí |
+| `banana` / `apple` / `orange` | Orgánico | Café ♻️ | Sí |
+| `Waste` / `waste` / `trash` | Basura general | Negro 🗑️ | No |
 
 **`get_material(class_name: str) -> str`** — retorna el material en español. Insensible a mayúsculas. Retorna `"no clasificado"` si la clase no está en el mapa.
 
@@ -314,6 +311,12 @@ Interfaz web Streamlit que actúa como cliente gRPC.
 - **`draw_boxes`**: dibuja bounding boxes con color por material y etiqueta de clase + confianza.
 - **`run_detection`**: comprime imagen a JPEG 85% / 1280px y la envía por gRPC.
 - **`main`**: orquesta la interfaz completa — upload, detección, visualización y tarjetas de resultados.
+
+---
+
+### `notebooks/register_model_mlflow.py`
+
+Script de registro del modelo en MLflow. Carga `trashnet.pt`, registra parámetros, fuente, licencia y número de clases, y guarda el modelo como artefacto bajo `model/`.
 
 ---
 
@@ -435,7 +438,7 @@ Resultado esperado: `Conexion exitosa: False` — el servidor respondió aunque 
 pytest tests/ -v
 ```
 
-**13 pruebas** cubren el clasificador de materiales (clases, contenedores, reciclabilidad, case-insensitivity) y el preprocesamiento de imágenes (compresión, aspect ratio, conversión RGB).
+**15 pruebas** cubren el clasificador de materiales (clases COCO y del modelo especializado, contenedores, reciclabilidad, case-insensitivity) y el preprocesamiento de imágenes (compresión, aspect ratio, conversión RGB).
 
 ---
 
@@ -449,7 +452,9 @@ El proyecto se gestiona con **Jira** usando Gitflow: ramas `main` y `develop`, c
 
 ## Decisiones de Diseño
 
-**¿Por qué YOLO Waste Detection en lugar de YOLOv8n-COCO?** El modelo elegido fue fine-tuneado sobre 4.127 imágenes de residuos reales para las 5 categorías exactas del dominio del reciclaje, mejorando la precisión en el dominio específico y eliminando la necesidad de remapeo entre clases genéricas y materiales.
+**¿Por qué YOLO Waste Detection en lugar de YOLOv8n-COCO?** El modelo elegido fue fine-tuneado sobre 4.127 imágenes de residuos reales para las 5 categorías exactas del dominio del reciclaje, mejorando la precisión en el dominio específico y reduciendo la necesidad de remapeo entre clases genéricas y materiales reciclables.
+
+**¿Por qué YOLOv8n y no modelos más recientes como YOLO11?** YOLOv8n ofrece el mejor balance entre velocidad e inferencia en CPU sin GPU. Modelos más recientes requieren más recursos computacionales o APIs externas, lo que compromete la arquitectura local del proyecto.
 
 **¿Por qué separar inference_service de app_service?** Bajo acoplamiento: cambiar el modelo solo requiere modificar `inference_service` sin tocar la interfaz. Permite escalar cada servicio de forma independiente.
 
@@ -466,7 +471,7 @@ El proyecto se gestiona con **Jira** usando Gitflow: ramas `main` y `develop`, c
 - El modelo detecta 5 clases sin incluir `Cardboard` como clase separada — el cartón es clasificado como `Paper` o `Waste` según el contexto visual.
 - La clase `Waste` actúa como categoría residual para objetos ambiguos.
 - El conjunto de test del dataset original es pequeño (45 imágenes) — el rendimiento en imágenes muy distintas al dominio de entrenamiento puede variar.
-- No se reconocen residuos orgánicos ni materiales compuestos.
+- No se reconocen residuos orgánicos ni materiales compuestos directamente — estos son manejados por el módulo `material_classifier` mediante aliases de clases COCO.
 - El sistema está diseñado para ejecución local. El despliegue en nube corresponde al Módulo 4 del curso.
 
 ---
