@@ -1,21 +1,29 @@
 """
 register_model_mlflow.py
 
-Script para registrar el modelo YOLOv8n preentrenado en MLflow.
+Script para registrar el modelo TrashNet v5 en MLflow.
 
-Este script descarga el modelo YOLOv8n preentrenado en COCO, registra
-sus parametros y metricas oficiales en MLflow y almacena el archivo
-del modelo como artefacto en el Model Registry.
+Este script carga el modelo TrashNet v5 preentrenado (descargado de
+Roboflow Universe), registra sus parametros y metricas oficiales en
+MLflow y almacena el archivo del modelo como artefacto en el
+Model Registry.
 
 Se ejecuta una sola vez durante la fase de configuracion del proyecto.
 No requiere entrenamiento propio ya que utiliza los pesos oficiales
-publicados por Ultralytics.
+publicados por Polygence Project en Roboflow Universe.
 
-Metricas registradas (fuente: Ultralytics YOLOv8 official benchmarks):
-    - mAP50:     0.525
-    - mAP50_95:  0.372
-    - precision: 0.680
-    - recall:    0.532
+Modelo: TrashNet v5
+Fuente: https://universe.roboflow.com/polygence-project/
+        trashnet-a-set-of-annotated-images-of-trash-that-can-be-used-for-object-detection
+Licencia: CC BY 4.0
+
+Metricas registradas (fuente: Roboflow Universe - TrashNet v5):
+    - mAP50:     0.661
+    - precision: 0.802
+    - recall:    0.601
+
+Clases detectadas (6):
+    glass, paper, cardboard, plastic, metal, trash
 
 Uso:
     Asegurate de tener el entorno virtual activado y ejecuta:
@@ -30,51 +38,53 @@ import mlflow
 from ultralytics import YOLO
 
 # ── Configuracion MLflow ──────────────────────────────────────────────────────
-EXPERIMENT_NAME = "recycling-yolov8-registration"
-MODEL_PATH = "yolov8n.pt"
+EXPERIMENT_NAME = "recycling-trashnet-registration"
+MODEL_PATH = "trashnet.pt"
 
-# ── Metricas oficiales YOLOv8n en COCO ───────────────────────────────────────
-# Fuente: https://docs.ultralytics.com/models/yolov8/
-COCO_METRICS = {
-    "mAP50": 0.525,
-    "mAP50_95": 0.372,
-    "precision": 0.680,
-    "recall": 0.532,
+# ── Metricas oficiales TrashNet v5 (Roboflow Universe) ────────────────────────
+# Fuente: https://universe.roboflow.com/polygence-project/
+#         trashnet-a-set-of-annotated-images-of-trash-that-can-be-used-for-object-detection/model/5
+TRASHNET_METRICS = {
+    "mAP50":     0.661,
+    "precision": 0.802,
+    "recall":    0.601,
 }
 
 # ── Parametros del modelo ─────────────────────────────────────────────────────
 MODEL_PARAMS = {
-    "model_type": "YOLOv8n",
-    "weights": "COCO pretrained",
-    "num_classes": 80,
-    "input_size": 640,
-    "framework": "Ultralytics",
-    "training_mode": "pretrained",
-    "model_card": "https://docs.ultralytics.com/models/yolov8/",
-    "license": "AGPL-3.0",
-    "python_version": "3.11",
+    "model_name":      "TrashNet v5",
+    "model_type":      "YOLOv8 Object Detection",
+    "source":          "Roboflow Universe - Polygence Project",
+    "num_classes":     6,
+    "classes":         "glass,paper,cardboard,plastic,metal,trash",
+    "dataset_images":  2524,
+    "input_size":      640,
+    "framework":       "Ultralytics",
+    "training_mode":   "pretrained",
+    "model_card":      "https://universe.roboflow.com/polygence-project/trashnet-a-set-of-annotated-images-of-trash-that-can-be-used-for-object-detection/model/5",
+    "license":         "CC BY 4.0",
+    "python_version":  "3.11",
 }
 
 
-def register_pretrained_model() -> None:
+def register_trashnet_model() -> None:
     """
-    Descarga YOLOv8n preentrenado y lo registra en MLflow.
+    Carga TrashNet v5 y lo registra en MLflow.
 
     El proceso completo incluye:
         1. Crear o seleccionar el experimento en MLflow.
         2. Iniciar un nuevo run con nombre descriptivo.
-        3. Descargar y cargar el modelo YOLOv8n (automatico si no existe).
+        3. Cargar el modelo TrashNet desde trashnet.pt.
         4. Registrar los parametros del modelo.
-        5. Registrar las metricas oficiales de COCO.
-        6. Guardar el archivo yolov8n.pt como artefacto del run.
+        5. Registrar las metricas oficiales de Roboflow.
+        6. Guardar el archivo trashnet.pt como artefacto del run.
         7. Imprimir el Run ID para referencia futura.
 
     Note:
-        El archivo yolov8n.pt se descarga automaticamente desde los
-        servidores de Ultralytics (~6MB) si no existe en el directorio
-        de trabajo actual.
+        El archivo trashnet.pt debe existir en la raiz del proyecto.
+        Se descarga previamente con notebooks/download_trashnet.py.
 
-        El archivo yolov8n.pt esta en el .gitignore y se gestiona
+        El archivo trashnet.pt esta en el .gitignore y se gestiona
         exclusivamente como artefacto de MLflow, no como archivo
         del repositorio.
 
@@ -82,25 +92,26 @@ def register_pretrained_model() -> None:
         None
 
     Raises:
-        Exception: si MLflow no puede conectarse al servidor de tracking
-            o si la descarga del modelo falla por problemas de red.
+        FileNotFoundError: si trashnet.pt no existe en la raiz del proyecto.
+        Exception: si MLflow no puede conectarse al servidor de tracking.
     """
     # Crear o seleccionar experimento
     mlflow.set_experiment(EXPERIMENT_NAME)
 
-    with mlflow.start_run(run_name="yolov8n-coco-pretrained") as run:
+    with mlflow.start_run(run_name="trashnet-v5-roboflow") as run:
 
-        # 1. Cargar modelo (descarga automatica si no existe)
-        print("Cargando modelo YOLOv8n...")
-        YOLO(MODEL_PATH)
+        # 1. Cargar modelo TrashNet
+        print("Cargando modelo TrashNet v5...")
+        model = YOLO(MODEL_PATH)
+        print(f"Clases del modelo: {list(model.names.values())}")
 
         # 2. Registrar parametros del modelo
         print("Registrando parametros...")
         mlflow.log_params(MODEL_PARAMS)
 
-        # 3. Registrar metricas oficiales de COCO
+        # 3. Registrar metricas oficiales de Roboflow
         print("Registrando metricas...")
-        mlflow.log_metrics(COCO_METRICS)
+        mlflow.log_metrics(TRASHNET_METRICS)
 
         # 4. Guardar modelo como artefacto
         print("Registrando artefacto...")
@@ -108,14 +119,15 @@ def register_pretrained_model() -> None:
 
         # 5. Imprimir Run ID para referencia
         print("=" * 50)
-        print(f"Modelo registrado exitosamente.")
+        print("Modelo registrado exitosamente.")
         print(f"Experimento : {EXPERIMENT_NAME}")
         print(f"Run ID      : {run.info.run_id}")
         print(f"Artefacto   : {MODEL_PATH}")
+        print(f"Clases      : {MODEL_PARAMS['classes']}")
         print("=" * 50)
         print("Abre MLflow UI con: mlflow ui")
         print("Luego visita: http://localhost:5000")
 
 
 if __name__ == "__main__":
-    register_pretrained_model()
+    register_trashnet_model()

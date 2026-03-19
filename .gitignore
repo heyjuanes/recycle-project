@@ -1,5 +1,6 @@
 ﻿# Modelo entrenado (se gestiona como artefacto en MLflow)
 *.pt
+trashnet-v5/
 *.h5
 *.onnx
 *.pkl

@@ -2,15 +2,16 @@
 
 ![MIT License](https://img.shields.io/badge/License-MIT-green.svg)
 ![Python](https://img.shields.io/badge/Python-3.11-blue.svg)
-![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-purple.svg)
+![TrashNet](https://img.shields.io/badge/TrashNet-Roboflow-purple.svg)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.30-red.svg)
 ![gRPC](https://img.shields.io/badge/gRPC-1.60-orange.svg)
 ![MLflow](https://img.shields.io/badge/MLflow-2.10-blue.svg)
+![uv](https://img.shields.io/badge/uv-package%20manager-black.svg)
 
 **Asignatura:** Desarrollo de Proyectos de IA  
 **Docente:** Jan Polanco Velasco  
 **Universidad:** Universidad Autónoma de Occidente — Facultad de Ingeniería  
-**Equipo:** Marco Antonio Acosta · Juan Esteban Espitia · Geraldine Filigrana Sánchez · Julian David Lopez
+**Equipo:** Marco Antonio Acosta · Juan Esteban Espitia · Geraldine Filigrana Sánchez · Julian David Lopez  
 **Periodo:** Marzo 2026
 
 ---
@@ -25,7 +26,7 @@
 - [Instalación y Ejecución Local](#instalación-y-ejecución-local)
 - [Ejecución con Docker](#ejecución-con-docker)
 - [Documentación de Módulos y Funciones](#documentación-de-módulos-y-funciones)
-- [El Modelo — YOLOv8n](#el-modelo--yolov8n)
+- [El Modelo — TrashNet v5](#el-modelo--trashnet-v5)
 - [Gestión del Modelo con MLflow](#gestión-del-modelo-con-mlflow)
 - [Comunicación gRPC](#comunicación-grpc)
 - [Pruebas Unitarias](#pruebas-unitarias)
@@ -38,15 +39,15 @@
 
 ## Descripción del Proyecto
 
-Este proyecto implementa una aplicación web de visión por computador que permite al usuario cargar una imagen, detectar automáticamente objetos reciclables presentes en ella y clasificar cada objeto según su tipo de material (plástico, metal, vidrio o cartón).
+Este proyecto implementa una aplicación web de visión por computador que permite al usuario cargar una imagen, detectar automáticamente objetos reciclables presentes en ella y clasificar cada objeto según su tipo de material (vidrio, papel, cartón, plástico, metal o basura general).
 
-El sistema utiliza **YOLOv8n** (You Only Look Once, versión 8 nano) como modelo de detección de objetos, un modelo preentrenado en el dataset COCO capaz de identificar 80 clases de objetos cotidianos. Sobre las detecciones de YOLO se aplica un módulo de reglas de negocio que mapea cada clase detectada a una categoría de material reciclable.
+El sistema utiliza **TrashNet v5**, un modelo YOLOv8 preentrenado específicamente en residuos reciclables, publicado por Polygence Project en Roboflow Universe bajo licencia CC BY 4.0. A diferencia de modelos de propósito general, TrashNet fue entrenado con 2.524 imágenes de residuos reales anotadas con bounding boxes, lo que le permite detectar directamente las 6 categorías de reciclaje sin necesidad de un módulo de remapeo adicional.
 
-La aplicación tiene fines **educativos y demostrativos**, orientada a ilustrar cómo integrar un modelo de Machine Learning en una arquitectura de microservicios real, siguiendo buenas prácticas de ingeniería de software.
+La aplicación tiene fines **educativos y demostrativos**, orientada a ilustrar cómo integrar un modelo de Machine Learning especializado en una arquitectura de microservicios real, siguiendo buenas prácticas de ingeniería de software.
 
 ### Problema que resuelve
 
-En muchos entornos urbanos los usuarios no saben en qué contenedor depositar un objeto. Este sistema permite fotografiar el objeto y obtener de inmediato su categoría de material, facilitando la separación correcta de residuos.
+En muchos entornos urbanos los usuarios no saben en qué contenedor depositar un objeto. Este sistema permite fotografiar el objeto y obtener de inmediato su categoría de material y el contenedor correspondiente, facilitando la separación correcta de residuos.
 
 ---
 
@@ -70,7 +71,7 @@ El sistema está dividido en **dos microservicios independientes** que se comuni
                        │ gRPC (localhost:50051)
 ┌──────────────────────▼──────────────────────────────┐
 │           inference_service (servidor gRPC)         │
-│  - Carga el modelo YOLOv8n al iniciar               │
+│  - Carga el modelo TrashNet v5 al iniciar           │
 │  - Recibe imagen en bytes                           │
 │  - Ejecuta inferencia con YOLOv8                    │
 │  - Clasifica cada detección por material            │
@@ -83,8 +84,8 @@ El sistema está dividido en **dos microservicios independientes** que se comuni
 1. El usuario sube una imagen JPG/PNG desde la interfaz Streamlit.
 2. `app_service` lee los bytes de la imagen y la comprime a máximo 1280px para optimizar la transferencia.
 3. `app_service` envía los bytes al `inference_service` mediante una llamada gRPC (`DetectObjects`).
-4. `inference_service` decodifica los bytes, crea una imagen PIL y la pasa a YOLOv8.
-5. YOLOv8 retorna las detecciones: clase, confianza y coordenadas del bounding box.
+4. `inference_service` decodifica los bytes, crea una imagen PIL y la pasa a TrashNet.
+5. TrashNet retorna las detecciones: clase, confianza y coordenadas del bounding box.
 6. `inference_service` consulta `material_classifier` para obtener el material de cada clase.
 7. `inference_service` empaqueta los resultados en un `DetectionResponse` y lo retorna vía gRPC.
 8. `app_service` recibe la respuesta, dibuja los bounding boxes sobre la imagen y muestra los resultados.
@@ -100,15 +101,16 @@ recycle-project/
 │   └── app.py                  # Interfaz Streamlit + cliente gRPC
 ├── inference_service/
 │   ├── __init__.py
-│   ├── server.py               # Servidor gRPC + lógica de inferencia YOLOv8
-│   ├── material_classifier.py  # Módulo de reglas objeto → material
+│   ├── server.py               # Servidor gRPC + lógica de inferencia TrashNet
+│   ├── material_classifier.py  # Módulo de reglas clase → material reciclable
 │   └── test_client.py          # Cliente de prueba para verificar la conexión gRPC
 ├── proto/
 │   ├── recycling.proto         # Definición del contrato gRPC
 │   ├── recycling_pb2.py        # Código Python generado desde el .proto (mensajes)
 │   └── recycling_pb2_grpc.py   # Código Python generado desde el .proto (servicios)
 ├── notebooks/
-│   └── register_model_mlflow.py  # Script de registro del modelo en MLflow
+│   ├── download_trashnet.py      # Descarga trashnet.pt desde Roboflow
+│   └── register_model_mlflow.py  # Registra el modelo en MLflow
 ├── data/
 │   ├── raw/                    # Dataset original sin procesar
 │   └── processed/              # Dataset preprocesado
@@ -129,6 +131,8 @@ recycle-project/
 └── README.md
 ```
 
+> ⚠️ El archivo `trashnet.pt` no está en el repositorio (excluido por `.gitignore`). Descárgalo con el script `notebooks/download_trashnet.py` antes de ejecutar el sistema.
+
 ---
 
 ## Tecnologías y Dependencias
@@ -136,7 +140,7 @@ recycle-project/
 | Tecnología | Versión | Uso |
 |---|---|---|
 | Python | 3.11 | Lenguaje base |
-| YOLOv8n (Ultralytics) | ≥ 8.0.0 | Detección de objetos |
+| TrashNet v5 (YOLOv8) | Roboflow | Detección de objetos reciclables |
 | PyTorch | ≥ 2.0.0 | Framework de deep learning |
 | Streamlit | ≥ 1.30.0 | Interfaz web |
 | gRPC | ≥ 1.60.0 | Comunicación entre microservicios |
@@ -147,14 +151,16 @@ recycle-project/
 | NumPy | ≥ 1.26.0 | Operaciones numéricas |
 | Pandas | ≥ 2.0.0 | Manejo de datos tabulares |
 | pytest | ≥ 8.0.0 | Pruebas unitarias |
+| roboflow | latest | Descarga del modelo TrashNet |
 | Docker | ≥ 24.0 | Contenerización |
-| uv | latest | Instalación rápida de dependencias |
+| uv | latest | Gestor de paquetes y entornos virtuales |
 
 ---
 
 ## Requisitos Previos
 
 - Python 3.11 o superior instalado y en el PATH
+- [uv](https://docs.astral.sh/uv/) instalado (`pip install uv`)
 - Git instalado
 - Docker Desktop instalado (solo para ejecución con Docker)
 - Al menos 2GB de espacio en disco (para el modelo y dependencias)
@@ -170,7 +176,7 @@ git clone https://github.com/heyjuanes/recycle-project.git
 cd recycle-project
 ```
 
-### 2. Crear y activar el entorno virtual
+### 2. Crear y activar el entorno virtual con uv
 
 **Windows (PowerShell):**
 ```powershell
@@ -185,42 +191,51 @@ source .venv/bin/activate
 ```
 
 ### 3. Instalar dependencias
+
 ```powershell
 uv pip install -r requirements.txt
 ```
 
-### 4. Iniciar el servidor gRPC (inference_service)
+### 4. Descargar el modelo TrashNet
+
+El archivo `trashnet.pt` no está en el repositorio. Descárgalo ejecutando:
+
+```powershell
+python notebooks/download_trashnet.py
+```
+
+Esto descarga el modelo TrashNet v5 desde Roboflow Universe y lo guarda como `trashnet.pt` en la raíz del proyecto.
+
+### 5. Iniciar el servidor gRPC (inference_service)
 
 Abre una terminal, activa el entorno virtual y ejecuta:
 
-```bash
+```powershell
 python inference_service/server.py
 ```
 
 Deberías ver:
 ```
-Cargando modelo YOLOv8n...
-Modelo listo.
+Cargando modelo TrashNet v5...
+Modelo TrashNet listo. Clases: ['glass', 'paper', 'cardboard', 'plastic', 'metal', 'trash']
 Servidor gRPC corriendo en puerto 50051...
 ```
 
-> ⚠️ El modelo `yolov8n.pt` se descarga automáticamente (~6MB) la primera vez que se ejecuta el servidor.
-
-### 5. Iniciar la interfaz Streamlit (app_service)
+### 6. Iniciar la interfaz Streamlit (app_service)
 
 Abre una **segunda terminal**, activa el entorno virtual y ejecuta:
 
-```bash
+```powershell
 streamlit run app_service/app.py
 ```
 
 La aplicación se abrirá automáticamente en: **http://localhost:8501**
 
-### 6. Usar la aplicación
+### 7. Usar la aplicación
 
 1. Abre http://localhost:8501 en tu navegador.
 2. Haz clic en **"Browse files"** o arrastra una imagen JPG/PNG.
-3. El sistema detectará automáticamente los objetos y clasificará su material.
+3. El sistema detectará automáticamente los residuos y clasificará su material.
 4. Verás la imagen anotada con bounding boxes y una tabla de resultados.
 
 ---
@@ -253,6 +268,7 @@ docker-compose down
 - El servidor gRPC y la interfaz Streamlit se inician juntos dentro del mismo contenedor.
 - El puerto `8501` expone la interfaz web y el puerto `50051` expone el servidor gRPC.
 - Los experimentos de MLflow se persisten en el volumen `./mlruns`.
+- El archivo `trashnet.pt` debe existir en la raíz **antes** de construir la imagen Docker.
 
 ---
 
@@ -260,37 +276,43 @@ docker-compose down
 
 ### `inference_service/material_classifier.py`
 
-Módulo de reglas de negocio que mapea clases de objetos detectados por YOLOv8 a categorías de material reciclable.
+Módulo de reglas de negocio que mapea las clases detectadas por TrashNet a categorías de material reciclable con información de contenedor y reciclabilidad.
 
-**`MATERIAL_MAP`** — diccionario que define la relación entre clase YOLO y material:
+**`MATERIAL_MAP`** — diccionario que define la relación entre clase del modelo y material en español:
 
-| Clase YOLO | Material |
-|---|---|
-| bottle, cup, bowl, chair, keyboard, remote, cell phone | plástico |
-| can, fork, knife, spoon, scissors | metal |
-| book, laptop, mouse, clock | cartón |
-| wine glass, vase | vidrio |
+| Clase TrashNet | Material | Contenedor | Reciclable |
+|---|---|---|---|
+| `glass` | Vidrio | Verde ♻️ | Sí |
+| `paper` | Papel | Azul ♻️ | Sí |
+| `cardboard` | Cartón | Azul ♻️ | Sí |
+| `plastic` | Plástico | Amarillo ♻️ | Sí |
+| `metal` | Metal | Gris ♻️ | Sí |
+| `trash` | Basura general | Negro 🗑️ | No |
 
 **`get_material(class_name: str) -> str`**
-- Recibe el nombre de la clase detectada por YOLOv8.
+- Recibe el nombre de la clase detectada por TrashNet.
 - Convierte el nombre a minúsculas para evitar problemas de capitalización.
-- Retorna la categoría de material correspondiente.
+- Retorna la categoría del material en español.
 - Si la clase no está en el mapa, retorna `"no clasificado"`.
+
+**`get_material_info(class_name: str) -> dict`**
+- Retorna un diccionario con `contenedor` (str) y `reciclable` (bool).
+- Útil para la interfaz cuando necesita el color del contenedor y el estado de reciclabilidad por separado.
 
 ---
 
 ### `inference_service/server.py`
 
-Servidor gRPC que expone el servicio de inferencia YOLOv8.
+Servidor gRPC que expone el servicio de inferencia TrashNet.
 
 **`RecyclingInferenceServicer`** — clase que implementa el contrato gRPC definido en `recycling.proto`.
 
-- **`__init__(self)`**: carga el modelo YOLOv8n desde el archivo `yolov8n.pt` al inicializar el servidor. El modelo se carga una sola vez en memoria para optimizar el rendimiento.
+- **`__init__(self)`**: carga el modelo TrashNet v5 desde `trashnet.pt` al inicializar el servidor. El modelo se carga una sola vez en memoria para optimizar el rendimiento e imprime las clases disponibles al arrancar.
 
 - **`DetectObjects(self, request, context) -> DetectionResponse`**: método principal del servicio.
   - Recibe un `DetectionRequest` con la imagen codificada en bytes.
   - Decodifica los bytes a imagen PIL usando `io.BytesIO`.
-  - Ejecuta inferencia YOLOv8 con `verbose=False` para suprimir logs internos.
+  - Ejecuta inferencia TrashNet con `verbose=False` para suprimir logs internos.
   - Itera sobre cada detección extrayendo: `class_id`, `class_name`, `confidence` y coordenadas `x1, y1, x2, y2`.
   - Consulta `get_material()` para cada clase detectada.
   - Construye y retorna un `DetectionResponse` con la lista de `DetectedObject`.
@@ -314,7 +336,7 @@ Interfaz web Streamlit que actúa como cliente gRPC.
 **`draw_boxes(image: Image.Image, objects: list) -> Image.Image`**
 - Recibe la imagen PIL original y la lista de objetos detectados.
 - Para cada objeto dibuja un rectángulo de color según el material usando `ImageDraw`.
-- Cada material tiene un color asignado: plástico (azul), metal (rojo), vidrio (verde), cartón (naranja), no clasificado (gris).
+- Cada material tiene un color asignado: plástico (azul), metal (rojo), vidrio (verde), cartón (naranja), basura (gris).
 - Dibuja una etiqueta con la clase, el material y el porcentaje de confianza sobre cada bounding box.
 - Retorna la imagen anotada.
 
@@ -336,17 +358,30 @@ Interfaz web Streamlit que actúa como cliente gRPC.
 
 ---
 
+### `notebooks/download_trashnet.py`
+
+Script para descargar el modelo TrashNet v5 desde Roboflow Universe.
+
+**`download_model()`**
+- Se conecta a Roboflow Universe usando la API key del proyecto.
+- Descarga el modelo TrashNet v5 en formato YOLOv8 hacia la carpeta `trashnet-v5/`.
+- Busca el archivo `best.pt` dentro de la carpeta descargada usando `rglob`.
+- Lo copia a la raíz del proyecto como `trashnet.pt`.
+- Imprime la ruta de destino al finalizar.
+
+---
+
 ### `notebooks/register_model_mlflow.py`
 
-Script de registro del modelo YOLOv8n preentrenado en MLflow.
+Script de registro del modelo TrashNet v5 en MLflow.
 
-**`register_pretrained_model()`**
-- Crea o selecciona el experimento `recycling-yolov8-registration` en MLflow.
-- Inicia un run llamado `yolov8n-coco-pretrained`.
-- Descarga y carga el modelo YOLOv8n con `YOLO("yolov8n.pt")` — la descarga es automática si el archivo no existe.
-- Registra parámetros del modelo: tipo, pesos, número de clases, tamaño de entrada, framework y modo de entrenamiento.
-- Registra las métricas oficiales de YOLOv8n en COCO: mAP50=0.525, mAP50-95=0.372, precision=0.680, recall=0.532.
-- Guarda el archivo `yolov8n.pt` como artefacto bajo la ruta `model/` del run.
+**`register_trashnet_model()`**
+- Crea o selecciona el experimento `recycling-trashnet-registration` en MLflow.
+- Inicia un run llamado `trashnet-v5-roboflow`.
+- Carga el modelo TrashNet con `YOLO("trashnet.pt")` e imprime las clases disponibles.
+- Registra parámetros del modelo: nombre, tipo, fuente, número de clases, lista de clases, imágenes de entrenamiento, tamaño de entrada, framework, modo y licencia.
+- Registra las métricas oficiales de TrashNet v5: mAP50=0.661, precision=0.802, recall=0.601.
+- Guarda el archivo `trashnet.pt` como artefacto bajo la ruta `model/` del run.
 - Imprime el Run ID al finalizar.
 
 ---
@@ -375,7 +410,7 @@ Define el contrato de comunicación entre `app_service` e `inference_service`.
 - `image_data (bytes)`: imagen codificada en bytes para ser procesada.
 
 **Mensaje `DetectedObject`:**
-- `class_name (string)`: nombre de la clase detectada por YOLOv8.
+- `class_name (string)`: nombre de la clase detectada por TrashNet.
 - `confidence (float)`: nivel de confianza de la detección (0.0 a 1.0).
 - `x1, y1, x2, y2 (float)`: coordenadas del bounding box en píxeles.
 - `material (string)`: categoría de material reciclable asignada.
@@ -387,27 +422,28 @@ Define el contrato de comunicación entre `app_service` e `inference_service`.
 
 ---
 
-## El Modelo — YOLOv8n
+## El Modelo — TrashNet v5
 
-### ¿Qué es YOLO?
+### ¿Qué es TrashNet?
 
-**YOLO** (You Only Look Once) es una familia de modelos de detección de objetos que existe desde 2015. El nombre describe su principio fundamental: a diferencia de sistemas más antiguos que analizaban la imagen varias veces en diferentes regiones, YOLO analiza **toda la imagen en una sola pasada**, lo que lo hace extremadamente rápido.
+**TrashNet** es un modelo de detección de objetos basado en la arquitectura **YOLOv8**, entrenado específicamente en imágenes de residuos reciclables y publicado por **Polygence Project** en [Roboflow Universe](https://universe.roboflow.com/polygence-project/trashnet-a-set-of-annotated-images-of-trash-that-can-be-used-for-object-detection) bajo licencia **CC BY 4.0**.
 
-**YOLOv8** es la versión más reciente, desarrollada por **Ultralytics** en 2023. La variante **n** (nano) es la más liviana de la familia, diseñada específicamente para correr en CPU sin necesidad de GPU.
+A diferencia de modelos de propósito general como YOLOv8n-COCO, TrashNet fue entrenado exclusivamente con imágenes de residuos, lo que lo hace más preciso para el dominio específico del reciclaje.
 
-### ¿Por qué no fue necesario entrenarlo?
+### Clases detectadas
 
-Ultralytics entrenó YOLOv8n con el dataset **COCO** (Common Objects in Context), uno de los datasets más grandes del mundo de la visión por computador:
-
-- **330,000 imágenes** de escenas cotidianas
-- **1.5 millones** de objetos anotados manualmente
-- **80 clases** de objetos: personas, vehículos, animales, utensilios, muebles, etc.
-
-El resultado de ese entrenamiento está comprimido en el archivo `yolov8n.pt` (~6MB). Al ejecutar `YOLO("yolov8n.pt")` se carga toda esa inteligencia directamente en memoria, lista para detectar objetos en cualquier imagen.
+| Clase | Material | Contenedor |
+|---|---|---|
+| `glass` | Vidrio | ♻️ Verde |
+| `paper` | Papel | ♻️ Azul |
+| `cardboard` | Cartón | ♻️ Azul |
+| `plastic` | Plástico | ♻️ Amarillo |
+| `metal` | Metal | ♻️ Gris |
+| `trash` | Basura general | 🗑️ Negro |
 
 ### ¿Cómo funciona internamente?
 
-Cuando recibe una imagen, YOLOv8 la procesa en tres etapas:
+Cuando recibe una imagen, TrashNet (YOLOv8) la procesa en tres etapas:
 
 ```
 Imagen de entrada
@@ -422,29 +458,29 @@ Imagen de entrada
 └──────┬──────┘
        ▼
 ┌─────────────┐
-│    Head     │  ← Predice: ¿qué objeto? ¿dónde? ¿qué tan seguro?
+│    Head     │  ← Predice: ¿qué residuo? ¿dónde? ¿qué tan seguro?
 └──────┬──────┘
        ▼
   Detecciones (clase + confianza + coordenadas)
 ```
-Se eligió **YOLOv8n** porque el proyecto corre en CPU local, priorizando velocidad de respuesta sobre precisión máxima.
 
-### Métricas oficiales (COCO benchmark)
+### Métricas oficiales (TrashNet v5 — Roboflow Universe)
 
 | Métrica | Valor |
 |---|---|
-| mAP@0.5 | 52.5% |
-| mAP@0.5:0.95 | 37.2% |
-| Precision | 68.0% |
-| Recall | 53.2% |
+| mAP@0.5 | 66.1% |
+| Precision | 80.2% |
+| Recall | 60.1% |
+| Imágenes de entrenamiento | 2.524 |
 
-> Fuente:  [Ultralytics YOLOv8 Model Card](https://docs.ultralytics.com/models/yolov8/)
+> Fuente: [Roboflow Universe — TrashNet v5](https://universe.roboflow.com/polygence-project/trashnet-a-set-of-annotated-images-of-trash-that-can-be-used-for-object-detection/model/5)  
+> Licencia: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
 
 ---
 
 ## Gestión del Modelo con MLflow
 
-MLflow se usa para llevar el ciclo de vida del modelo YOLOv8n.
+MLflow se usa para llevar el ciclo de vida del modelo TrashNet v5.
 
 ### Iniciar la interfaz MLflow
 
@@ -456,17 +492,15 @@ Abre: **http://localhost:5000**
 
 ### Qué encontrarás en MLflow
 
-- **Experimento:** `recycling-yolov8-registration`
-- **Run:** `yolov8n-coco-pretrained`
-- **Parámetros registrados:** tipo de modelo, pesos, número de clases, tamaño de entrada, framework, modo de entrenamiento.
-- **Métricas registradas:** mAP50, mAP50-95, precision, recall (métricas oficiales de YOLOv8n en COCO).
-- **Artefacto:** archivo `yolov8n.pt` almacenado bajo la ruta `model/`.
+- **Experimento:** `recycling-trashnet-registration`
+- **Run:** `trashnet-v5-roboflow`
+- **Parámetros registrados:** nombre del modelo, fuente, número de clases, lista de clases, imágenes de entrenamiento, tamaño de entrada, framework, licencia.
+- **Métricas registradas:** mAP50, precision, recall (métricas oficiales de TrashNet v5 en Roboflow).
+- **Artefacto:** archivo `trashnet.pt` almacenado bajo la ruta `model/`.
 
-### Re-registrar el modelo
+### Registrar el modelo en MLflow
 
-Si necesitas volver a registrar el modelo (por ejemplo después de un fine-tuning):
-
-```bash
+```powershell
 python notebooks/register_model_mlflow.py
 ```
 
@@ -519,10 +553,10 @@ pytest tests/ -v
 ### Resultado esperado
 
 ```
-tests/test_material_classifier.py::test_bottle_es_plastico          PASSED
-tests/test_material_classifier.py::test_can_es_metal                PASSED
-tests/test_material_classifier.py::test_wine_glass_es_vidrio        PASSED
-tests/test_material_classifier.py::test_book_es_carton              PASSED
+tests/test_material_classifier.py::test_glass_es_vidrio             PASSED
+tests/test_material_classifier.py::test_plastic_es_plastico         PASSED
+tests/test_material_classifier.py::test_metal_es_metal              PASSED
+tests/test_material_classifier.py::test_cardboard_es_carton         PASSED
 tests/test_material_classifier.py::test_clase_desconocida           PASSED
 tests/test_material_classifier.py::test_case_insensitive            PASSED
 tests/test_preprocessing.py::test_imagen_se_comprime_correctamente  PASSED
@@ -535,10 +569,10 @@ tests/test_preprocessing.py::test_imagen_se_convierte_a_rgb        PASSED
 ### Descripción de las pruebas
 
 **`tests/test_material_classifier.py`** — prueba el módulo `material_classifier`:
-- `test_bottle_es_plastico`: verifica que `bottle` se clasifica como `plastico`.
-- `test_can_es_metal`: verifica que `can` se clasifica como `metal`.
-- `test_wine_glass_es_vidrio`: verifica que `wine glass` se clasifica como `vidrio`.
-- `test_book_es_carton`: verifica que `book` se clasifica como `carton`.
+- `test_glass_es_vidrio`: verifica que `glass` se clasifica como `vidrio`.
+- `test_plastic_es_plastico`: verifica que `plastic` se clasifica como `plastico`.
+- `test_metal_es_metal`: verifica que `metal` se clasifica como `metal`.
+- `test_cardboard_es_carton`: verifica que `cardboard` se clasifica como `carton`.
 - `test_clase_desconocida`: verifica que una clase no mapeada retorna `no clasificado`.
 - `test_case_insensitive`: verifica que el clasificador no distingue mayúsculas de minúsculas.
 
@@ -546,6 +580,8 @@ tests/test_preprocessing.py::test_imagen_se_convierte_a_rgb        PASSED
 - `test_imagen_se_comprime_correctamente`: crea una imagen de 1920x1080, la comprime y verifica que el resultado pesa menos de 4MB (límite de gRPC por defecto).
 - `test_imagen_thumbnail_respeta_aspecto`: verifica que `thumbnail(1280, 1280)` no supera el tamaño máximo en ninguna dimensión.
 - `test_imagen_se_convierte_a_rgb`: verifica que una imagen RGBA se convierte correctamente a RGB sin errores.
+
+> ⚠️ Los tests de `test_material_classifier.py` verifican las clases de TrashNet. Si actualizaste el clasificador, asegúrate de actualizar también los tests para que reflejen las nuevas clases.
 
 ---
 
@@ -555,38 +591,42 @@ El proyecto se gestiona con **Jira** usando las columnas: To Do → In Progress 
 
 Cada funcionalidad del sistema se registra como un issue independiente con su rama `feature/` correspondiente siguiendo la metodología **Gitflow**.
 
-🔗 **Tablero Kanban:** https://recycle-project.atlassian.net/jira/software/projects/KAN/boards/1?atlOrigin=eyJpIjoiNWJlMGExZmIxMGNhNDc2OWI2NmFiMDk1ZTc5NGFiNjgiLCJwIjoiaiJ9 
+🔗 **Tablero Kanban:** https://recycle-project.atlassian.net/jira/software/projects/KAN/boards/1?atlOrigin=eyJpIjoiNWJlMGExZmIxMGNhNDc2OWI2NmFiMDk1ZTc5NGFiNjgiLCJwIjoiaiJ9
 
 ---
 
 ## Decisiones de Diseño
 
-**¿Por qué YOLOv8n y no fine-tuning?**
-Se optó por usar el modelo preentrenado en COCO que ya detecta objetos cotidianos reciclables como botellas, tazas y vasos. El valor académico del proyecto está en la arquitectura de software, no en el entrenamiento del modelo. Si en el futuro se quisiera mejorar la precisión, bastaría con reemplazar `yolov8n.pt` por un modelo fine-tuneado sin modificar ningún otro componente del sistema.
+**¿Por qué TrashNet en lugar de YOLOv8n-COCO?**
+YOLOv8n-COCO fue entrenado en 80 clases de objetos cotidianos, no específicamente en residuos. TrashNet fue entrenado con 2.524 imágenes de residuos reales anotadas con bounding boxes para las 6 categorías exactas del dominio del reciclaje. Esto elimina la necesidad de un módulo de remapeo entre clases COCO y materiales, simplifica el código y mejora la precisión en el dominio específico.
 
 **¿Por qué separar inference_service de app_service?**
-Para aplicar el principio de bajo acoplamiento: si en el futuro se cambia el modelo de YOLOv8 a otro, solo se modifica `inference_service` sin tocar la interfaz. Además permite escalar el servidor de inferencia de forma independiente del frontend.
+Para aplicar el principio de bajo acoplamiento: si en el futuro se cambia el modelo, solo se modifica `inference_service` sin tocar la interfaz. Además permite escalar el servidor de inferencia de forma independiente del frontend.
 
 **¿Por qué comprimir la imagen antes de enviarla por gRPC?**
-gRPC tiene un límite de 4MB por mensaje por defecto. Imágenes de alta resolución (12MB+) superan este límite. La compresión a JPEG calidad 85 con máximo 1280px reduce el tamaño sin pérdida visual significativa para los propósitos de detección de YOLOv8.
+gRPC tiene un límite de 4MB por mensaje por defecto. Imágenes de alta resolución (12MB+) superan este límite. La compresión a JPEG calidad 85 con máximo 1280px reduce el tamaño sin pérdida visual significativa para los propósitos de detección.
 
 **¿Por qué uv en lugar de pip?**
 `uv` es un instalador de paquetes Python escrito en Rust, significativamente más rápido que pip. Reduce el tiempo de instalación de dependencias de minutos a segundos, lo que es especialmente útil al construir la imagen Docker o configurar el entorno en una máquina nueva.
+
+**¿Por qué no subir trashnet.pt al repositorio?**
+Los archivos de modelos son artefactos pesados que no deben versionarse con Git. Se gestionan exclusivamente como artefactos de MLflow y se descargan bajo demanda mediante `notebooks/download_trashnet.py`, siguiendo las buenas prácticas de MLOps.
 
 ---
 
 ## Limitaciones Conocidas
 
-- El modelo YOLOv8n fue entrenado en COCO (objetos cotidianos), no en un dataset específico de reciclaje, por lo que algunas clasificaciones de material pueden no ser precisas para todos los objetos.
-- La cámara analógica puede ser detectada como `cell phone` por similitud visual en el dataset COCO.
+- El modelo TrashNet v5 tiene un Recall de 60.1%, lo que significa que puede no detectar todos los objetos presentes en una imagen, especialmente en condiciones de baja iluminación o ángulos inusuales.
+- La clase `trash` actúa como categoría residual para objetos que no son claramente reciclables, por lo que puede capturar objetos de categorías ambiguas.
 - Objetos grandes o con formas complejas pueden aparecer con detecciones duplicadas de diferente confianza.
 - El sistema está diseñado para ejecución local. El despliegue en nube corresponde al Módulo 4 del curso.
 - No se reconocen residuos orgánicos ni materiales compuestos.
-- La clasificación de material se basa en reglas fijas, no en aprendizaje automático.
+- La clasificación de material se basa en las clases directas del modelo, no en reglas adicionales de negocio.
 
 ---
 
 ## Licencia
 
-
 Este proyecto está distribuido bajo la licencia **MIT**. Consulta el archivo [LICENSE](LICENSE) para más información.
+
+El modelo TrashNet v5 está distribuido bajo licencia **CC BY 4.0** por Polygence Project. Fuente: [Roboflow Universe](https://universe.roboflow.com/polygence-project/trashnet-a-set-of-annotated-images-of-trash-that-can-be-used-for-object-detection).
