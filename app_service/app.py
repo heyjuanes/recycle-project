@@ -34,26 +34,25 @@ import recycling_pb2_grpc  # type: ignore
 GRPC_HOST = "localhost:50051"
 
 MATERIAL_COLORS = {
-    "plastico": "#3498DB",
-    "metal":    "#E74C3C",
-    "vidrio":   "#2ECC71",
-    "carton":   "#F39C12",
-    "basura":   "#6B7280",
+    "plastico":       "#3498DB",
+    "metal":          "#E74C3C",
+    "vidrio":         "#2ECC71",
+    "carton":         "#F39C12",
+    "basura":         "#6B7280",
     "no clasificado": "#95A5A6",
 }
 
 MATERIAL_ICONS = {
-    "plastico": "🔵",
-    "metal":    "🔴",
-    "vidrio":   "🟢",
-    "carton":   "🟠",
-    "basura":   "⚫",
+    "plastico":       "🔵",
+    "metal":          "🔴",
+    "vidrio":         "🟢",
+    "carton":         "🟠",
+    "basura":         "⚫",
     "no clasificado": "⚪",
 }
 
 CSS = """
 <style>
-    /* ── Forzar modo oscuro completo ── */
     html, body, [data-testid="stAppViewContainer"],
     [data-testid="stApp"], .stApp, .main, section.main,
     [data-testid="stHeader"] {
@@ -63,15 +62,11 @@ CSS = """
     [data-testid="stAppViewContainer"] > .main {
         background-color: #0f1117 !important;
     }
-    p, span, label, div {
-        color: #e2e8f0;
-    }
+    p, span, label, div { color: #e2e8f0; }
     [data-testid="stHeader"] {
         background: transparent !important;
         height: 0px !important;
     }
-
-    /* ── Banner ── */
     .banner {
         background: linear-gradient(135deg, #0d9488 0%, #0ea5e9 40%, #6366f1 80%, #a855f7 100%);
         border-radius: 16px;
@@ -122,8 +117,6 @@ CSS = """
         margin-top: 8px;
         margin-bottom: 0;
     }
-
-    /* ── Metricas ── */
     .metric-card {
         background: #1c1f2e;
         border: 1px solid #2d3148;
@@ -144,8 +137,6 @@ CSS = """
         letter-spacing: 1px;
         margin-top: 6px;
     }
-
-    /* ── Labels ── */
     .image-label {
         font-size: 0.72rem;
         color: #6b7280 !important;
@@ -153,8 +144,6 @@ CSS = """
         letter-spacing: 1px;
         margin-bottom: 8px;
     }
-
-    /* ── Sidebar ── */
     [data-testid="stSidebar"],
     [data-testid="stSidebar"] > div {
         background-color: #13151f !important;
@@ -187,8 +176,6 @@ CSS = """
     }
     .status-ok  { background-color: #22c55e; }
     .status-err { background-color: #ef4444; }
-
-    /* ── Upload ── */
     [data-testid="stFileUploader"] {
         background: #1c1f2e !important;
         border-radius: 12px;
@@ -196,7 +183,6 @@ CSS = """
         padding: 8px;
     }
     [data-testid="stFileUploader"] * { color: #9ca3af !important; }
-
     hr { border-color: #1e2130 !important; }
     [data-testid="stSpinner"] * { color: #0ea5e9 !important; }
 </style>
@@ -301,22 +287,22 @@ def render_sidebar():
     """
     with st.sidebar:
         st.markdown('<div class="sidebar-title">♻️ Recycle Detector</div>', unsafe_allow_html=True)
-        st.markdown('<div class="sidebar-item">Sistema de deteccion de material reciclable con TrashNet v5</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sidebar-item">Sistema de deteccion de material reciclable con YOLOv8</div>', unsafe_allow_html=True)
 
         st.markdown('<div class="sidebar-section">Estado del sistema</div>', unsafe_allow_html=True)
         server_ok = check_server_status()
         dot = "status-ok" if server_ok else "status-err"
         label = "Servidor gRPC activo" if server_ok else "Servidor gRPC inactivo"
         st.markdown(f'<div class="sidebar-item"><span class="status-dot {dot}"></span>{label}</div>', unsafe_allow_html=True)
-        st.markdown('<div class="sidebar-item"><span class="status-dot status-ok"></span>Modelo TrashNet v5 cargado</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sidebar-item"><span class="status-dot status-ok"></span>Modelo cargado</div>', unsafe_allow_html=True)
 
         st.markdown('<div class="sidebar-section">Modelo</div>', unsafe_allow_html=True)
         for item in [
-            "TrashNet v5 — Roboflow Universe",
-            "Dataset: 2.524 imágenes de residuos",
-            "mAP@0.5: 66.1%",
-            "Precision: 80.2%",
-            "Recall: 60.1%",
+            "YOLO Waste Detection — YOLOv8",
+            "Fuente: gianlucasposito (GitHub)",
+            "Dataset: 4.127 imágenes de residuos",
+            "Clases: Glass, Metal, Paper, Plastic, Waste",
+            "Licencia: MIT",
         ]:
             st.markdown(f'<div class="sidebar-item">{item}</div>', unsafe_allow_html=True)
 
@@ -326,7 +312,7 @@ def render_sidebar():
             st.markdown(f'<div class="sidebar-item">{icon} {material.capitalize()}</div>', unsafe_allow_html=True)
 
         st.markdown('<div class="sidebar-section">Arquitectura</div>', unsafe_allow_html=True)
-        for item in ["Streamlit → gRPC → TrashNet", "Puerto gRPC: 50051", "Puerto Web: 8501"]:
+        for item in ["Streamlit → gRPC → YOLOv8", "Puerto gRPC: 50051", "Puerto Web: 8501"]:
             st.markdown(f'<div class="sidebar-item">{item}</div>', unsafe_allow_html=True)
 
         st.markdown("---")
@@ -354,10 +340,10 @@ def render_metrics(objects: list):
 
     col1, col2, col3, col4 = st.columns(4)
     metrics = [
-        (str(total),                    "Objetos detectados",    "#ffffff"),
-        (f"{avg_conf:.0%}",             "Confianza promedio",    "#ffffff"),
-        (str(len(materiales)),          "Materiales distintos",  "#ffffff"),
-        (material_top.capitalize(),     "Material predominante", color_top),
+        (str(total),                "Objetos detectados",    "#ffffff"),
+        (f"{avg_conf:.0%}",         "Confianza promedio",    "#ffffff"),
+        (str(len(materiales)),      "Materiales distintos",  "#ffffff"),
+        (material_top.capitalize(), "Material predominante", color_top),
     ]
     for col, (val, lbl, color) in zip([col1, col2, col3, col4], metrics):
         with col:
@@ -416,19 +402,17 @@ def main() -> None:
     st.markdown(CSS, unsafe_allow_html=True)
     render_sidebar()
 
-    # ── Banner ────────────────────────────────────────────────────────────────
     st.markdown("""
     <div class="banner">
         <div class="banner-badge">Inteligencia Artificial · Vision por Computador</div>
         <div class="banner-title">♻️ Sistema de Deteccion de Material Reciclable</div>
         <div class="banner-subtitle">
             Sube una imagen y el sistema identificara automaticamente los residuos
-            y clasificara su material — vidrio, papel, carton, plastico, metal o basura.
+            y clasificara su material — plastico, metal, vidrio, carton o basura.
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Upload ────────────────────────────────────────────────────────────────
     uploaded_file = st.file_uploader(
         "Arrastra una imagen o haz clic para seleccionar",
         type=["jpg", "jpeg", "png"],
@@ -478,7 +462,7 @@ def main() -> None:
             st.markdown("""
             <div style="background:#1c1f2e; border-radius:12px; padding:40px;
                         text-align:center; color:#6b7280;">
-                No se detectaron residuos reciclables en esta imagen.
+                No se detectaron residuos en esta imagen.
             </div>
             """, unsafe_allow_html=True)
 
