@@ -1,14 +1,15 @@
 """
 server.py
 
-Servidor gRPC que expone el servicio de inferencia TrashNet para deteccion
+Servidor gRPC que expone el servicio de inferencia YOLOv8 para deteccion
 de objetos reciclables. Actua como el microservicio de inferencia del sistema,
 recibiendo imagenes en bytes y retornando las detecciones con su clasificacion
 de material reciclable.
 
-Modelo: TrashNet v5 (Roboflow Universe - Polygence Project)
-Clases: glass, paper, cardboard, plastic, metal, trash
-Licencia del modelo: CC BY 4.0
+Modelo: YOLO Waste Detection (gianlucasposito - GitHub)
+Fuente: https://github.com/gianlucasposito/YOLO-Waste-Detection
+Clases: Glass, Metal, Paper, Plastic, Waste
+Licencia del modelo: MIT
 """
 
 import sys
@@ -37,19 +38,19 @@ class RecyclingInferenceServicer(recycling_pb2_grpc.RecyclingInferenceServicer):
     """
     Implementacion del servicio gRPC RecyclingInference.
 
-    Carga el modelo TrashNet al inicializar y expone el metodo DetectObjects
-    para ejecutar inferencia sobre imagenes recibidas en bytes.
+    Carga el modelo YOLO Waste Detection al inicializar y expone el metodo
+    DetectObjects para ejecutar inferencia sobre imagenes recibidas en bytes.
 
-    El modelo TrashNet detecta 6 clases de residuos:
-        glass, paper, cardboard, plastic, metal, trash
+    El modelo detecta 5 clases de residuos:
+        Glass, Metal, Paper, Plastic, Waste
 
     Attributes:
-        model (YOLO): instancia del modelo TrashNet cargado en memoria.
+        model (YOLO): instancia del modelo cargado en memoria.
     """
 
     def __init__(self):
         """
-        Inicializa el servicer cargando el modelo TrashNet desde disco.
+        Inicializa el servicer cargando el modelo desde disco.
 
         El modelo se carga una sola vez en memoria al iniciar el servidor
         para optimizar el tiempo de respuesta en cada inferencia posterior.
@@ -58,15 +59,15 @@ class RecyclingInferenceServicer(recycling_pb2_grpc.RecyclingInferenceServicer):
             FileNotFoundError: si el archivo trashnet.pt no existe en
                 la ruta esperada.
         """
-        print("Cargando modelo TrashNet v5...")
-        self.model = YOLO(MODEL_PATH)
-        print("Modelo TrashNet listo. Clases:", list(self.model.names.values()))
+        print("Cargando modelo YOLO Waste Detection...")
+        self.model = YOLO(os.path.join(os.path.dirname(__file__), "..", MODEL_PATH))
+        print("Modelo listo. Clases:", list(self.model.names.values()))
 
     def DetectObjects(self, request, context):
         """
-        Ejecuta inferencia TrashNet sobre una imagen recibida via gRPC.
+        Ejecuta inferencia sobre una imagen recibida via gRPC.
 
-        Decodifica la imagen desde bytes, ejecuta el modelo TrashNet y
+        Decodifica la imagen desde bytes, ejecuta el modelo YOLOv8 y
         construye la respuesta con los objetos detectados, su confianza,
         coordenadas del bounding box y categoria de material reciclable.
 
@@ -93,7 +94,7 @@ class RecyclingInferenceServicer(recycling_pb2_grpc.RecyclingInferenceServicer):
             # Decodificar bytes a imagen PIL
             image = Image.open(io.BytesIO(request.image_data))
 
-            # Ejecutar inferencia TrashNet
+            # Ejecutar inferencia
             results = self.model(image, verbose=False)
             detected_objects = []
 
