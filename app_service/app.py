@@ -38,6 +38,7 @@ MATERIAL_COLORS = {
     "metal":    "#E74C3C",
     "vidrio":   "#2ECC71",
     "carton":   "#F39C12",
+    "basura":   "#6B7280",
     "no clasificado": "#95A5A6",
 }
 
@@ -46,6 +47,7 @@ MATERIAL_ICONS = {
     "metal":    "🔴",
     "vidrio":   "🟢",
     "carton":   "🟠",
+    "basura":   "⚫",
     "no clasificado": "⚪",
 }
 
@@ -271,6 +273,7 @@ def draw_boxes(image: Image.Image, objects: list) -> Image.Image:
         )
     return image
 
+
 def run_detection(image_bytes: bytes):
     """
     Comprime la imagen y la envia al inference_service via gRPC.
@@ -298,22 +301,22 @@ def render_sidebar():
     """
     with st.sidebar:
         st.markdown('<div class="sidebar-title">♻️ Recycle Detector</div>', unsafe_allow_html=True)
-        st.markdown('<div class="sidebar-item">Sistema de deteccion de material reciclable con YOLOv8n</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sidebar-item">Sistema de deteccion de material reciclable con TrashNet v5</div>', unsafe_allow_html=True)
 
         st.markdown('<div class="sidebar-section">Estado del sistema</div>', unsafe_allow_html=True)
         server_ok = check_server_status()
         dot = "status-ok" if server_ok else "status-err"
         label = "Servidor gRPC activo" if server_ok else "Servidor gRPC inactivo"
         st.markdown(f'<div class="sidebar-item"><span class="status-dot {dot}"></span>{label}</div>', unsafe_allow_html=True)
-        st.markdown('<div class="sidebar-item"><span class="status-dot status-ok"></span>Modelo YOLOv8n cargado</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sidebar-item"><span class="status-dot status-ok"></span>Modelo TrashNet v5 cargado</div>', unsafe_allow_html=True)
 
         st.markdown('<div class="sidebar-section">Modelo</div>', unsafe_allow_html=True)
         for item in [
-            "YOLOv8n — Ultralytics",
-            "Dataset: COCO (80 clases)",
-            "mAP@0.5: 52.5%",
-            "Precision: 68.0%",
-            "Recall: 53.2%",
+            "TrashNet v5 — Roboflow Universe",
+            "Dataset: 2.524 imágenes de residuos",
+            "mAP@0.5: 66.1%",
+            "Precision: 80.2%",
+            "Recall: 60.1%",
         ]:
             st.markdown(f'<div class="sidebar-item">{item}</div>', unsafe_allow_html=True)
 
@@ -323,7 +326,7 @@ def render_sidebar():
             st.markdown(f'<div class="sidebar-item">{icon} {material.capitalize()}</div>', unsafe_allow_html=True)
 
         st.markdown('<div class="sidebar-section">Arquitectura</div>', unsafe_allow_html=True)
-        for item in ["Streamlit → gRPC → YOLOv8", "Puerto gRPC: 50051", "Puerto Web: 8501"]:
+        for item in ["Streamlit → gRPC → TrashNet", "Puerto gRPC: 50051", "Puerto Web: 8501"]:
             st.markdown(f'<div class="sidebar-item">{item}</div>', unsafe_allow_html=True)
 
         st.markdown("---")
@@ -419,8 +422,8 @@ def main() -> None:
         <div class="banner-badge">Inteligencia Artificial · Vision por Computador</div>
         <div class="banner-title">♻️ Sistema de Deteccion de Material Reciclable</div>
         <div class="banner-subtitle">
-            Sube una imagen y el sistema identificara automaticamente los objetos
-            y clasificara su material — plastico, metal, vidrio o carton.
+            Sube una imagen y el sistema identificara automaticamente los residuos
+            y clasificara su material — vidrio, papel, carton, plastico, metal o basura.
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -441,7 +444,7 @@ def main() -> None:
                 Sube una imagen JPG o PNG para comenzar el analisis
             </div>
             <div style="color:#374151; font-size:0.8rem; margin-top:8px;">
-                Maximo 200MB · El sistema detectara objetos automaticamente
+                Maximo 200MB · El sistema detectara residuos automaticamente
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -475,7 +478,7 @@ def main() -> None:
             st.markdown("""
             <div style="background:#1c1f2e; border-radius:12px; padding:40px;
                         text-align:center; color:#6b7280;">
-                No se detectaron objetos reciclables en esta imagen.
+                No se detectaron residuos reciclables en esta imagen.
             </div>
             """, unsafe_allow_html=True)
 
