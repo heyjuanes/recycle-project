@@ -1,4 +1,4 @@
-stages:
+﻿stages:
   - test
   - build
   - deploy
@@ -7,7 +7,6 @@ variables:
   IMAGE_NAME: recycle-project
   IMAGE_TAG: $CI_COMMIT_SHORT_SHA
 
-# ── STAGE 1: TEST ───────────────────────────────────────────
 test:
   stage: test
   image: python:3.11
@@ -18,7 +17,6 @@ test:
   only:
     - main
 
-# ── STAGE 2: BUILD ──────────────────────────────────────────
 build:
   stage: build
   tags:
@@ -31,7 +29,6 @@ build:
   only:
     - main
 
-# ── STAGE 3: DEPLOY ─────────────────────────────────────────
 deploy:
   stage: deploy
   image: alpine:latest
@@ -42,10 +39,6 @@ deploy:
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
   script:
-    - ssh root@$DROPLET_IP "
-        docker stop recycle-app || true &&
-        docker rm recycle-app || true &&
-        docker run -d --name recycle-app -p 8501:8501 -p 50051:50051 $IMAGE_NAME:$IMAGE_TAG
-      "
+    - ssh root@$DROPLET_IP "docker stop recycle-app || true && docker rm recycle-app || true && docker run -d --name recycle-app -p 8501:8501 -p 50051:50051 $IMAGE_NAME:$IMAGE_TAG"
   only:
     - main
