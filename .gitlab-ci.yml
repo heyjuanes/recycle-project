@@ -1,4 +1,4 @@
-stages:
+﻿stages:
   - test
   - build
   - deploy
@@ -9,12 +9,11 @@ variables:
 
 test:
   stage: test
-  tags:
-    - recycle-runner
+  image: python:3.11
   before_script:
-    - python3.11 -m pip install -r requirements.txt --break-system-packages
+    - pip install -r requirements.txt
   script:
-    - python3.11 -m pytest tests/ -v
+    - pytest tests/ -v
   only:
     - main
 
@@ -22,8 +21,6 @@ build:
   stage: build
   tags:
     - recycle-runner
-  before_script:
-    - docker info
   script:
     - docker build -t $IMAGE_NAME:$IMAGE_TAG .
     - docker save $IMAGE_NAME:$IMAGE_TAG | gzip > /tmp/image.tar.gz
@@ -35,7 +32,6 @@ deploy:
   tags:
     - recycle-runner
   before_script:
-    - apt-get update -qq && apt-get install -y openssh-client
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
