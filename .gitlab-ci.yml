@@ -9,9 +9,11 @@ variables:
 
 test:
   stage: test
-  image: python:3.11
+  tags:
+    - recycle-runner
   before_script:
-    - pip install -r requirements.txt
+    - apt-get update -qq && apt-get install -y python3-pip python3-venv
+    - pip3 install -r requirements.txt
   script:
     - pytest tests/ -v
   only:
@@ -19,6 +21,10 @@ test:
 
 build:
   stage: build
+  tags:
+    - recycle-runner
+  before_script:
+    - docker info
   script:
     - docker build -t $IMAGE_NAME:$IMAGE_TAG .
     - docker save $IMAGE_NAME:$IMAGE_TAG | gzip > /tmp/image.tar.gz
@@ -27,8 +33,10 @@ build:
 
 deploy:
   stage: deploy
+  tags:
+    - recycle-runner
   before_script:
-    - which ssh-agent || apt-get install -y openssh-client
+    - apt-get update -qq && apt-get install -y openssh-client
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
