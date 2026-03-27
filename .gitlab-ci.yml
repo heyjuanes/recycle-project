@@ -9,37 +9,48 @@ variables:
 
 test:
   stage: test
-  tags:
-    - recycle-runner
+  image: python:3.11
   before_script:
-    - python3.11 -m pip install -r requirements.txt --break-system-packages
+    - pip install -r requirements.txt
   script:
-    - python3.11 -m pytest tests/ -v
+    - pytest tests/ -v
   only:
     - main
 
 build:
   stage: build
-  tags:
-    - recycle-runner
-  before_script:
-    - docker info
+  image: docker:24
+  services:
+    - docker:24-dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""
   script:
     - docker build -t $IMAGE_NAME:$IMAGE_TAG .
-    - docker save $IMAGE_NAME:$IMAGE_TAG | gzip > /tmp/image.tar.gz
+    - docker save $IMAGE_NAME:$IMAGE_TAG | gzip > image.tar.gz
+  artifacts:
+    paths:
+      - image.tar.gz
+    expire_in: 1 hour
   only:
     - main
 
 deploy:
   stage: deploy
-  tags:
-    - recycle-runner
+  image: alpine:latest
   before_script:
+    - apk add --no-cache openssh-client
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
   script:
-    - ssh root@$DROPLET_IP "docker stop recycle-app || true && docker rm recycle-app || true && docker run -d --name recycle-app -p 8501:8501 -p 50051:50051 $IMAGE_NAME:$IMAGE_TAG"
+    - scp image.tar.gz root@$DROPLET_IP:/tmp/
+    - ssh root@$DROPLET_IP "
+        docker load < /tmp/image.tar.gz &&
+        docker stop recycle-app || true &&
+        docker rm recycle-app || true &&
+        docker run -d --name recycle-app -p 8501:8501 -p 50051:50051 $IMAGE_NAME:$IMAGE_TAG &&
+        rm /tmp/image.tar.gz
+      "
   only:
     - main
