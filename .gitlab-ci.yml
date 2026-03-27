@@ -20,6 +20,11 @@ build:
   stage: build
   tags:
     - recycle-runner
+  before_script:
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
   script:
     - docker build -t $IMAGE_NAME:$IMAGE_TAG .
     - docker save $IMAGE_NAME:$IMAGE_TAG | gzip | ssh root@$DROPLET_IP "cat > /tmp/image.tar.gz"
