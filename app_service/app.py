@@ -402,9 +402,15 @@ def main() -> None:
     st.markdown(CSS, unsafe_allow_html=True)
     render_sidebar()
 
+    """
+    MODIFICACION:
+    CODE_VERIFY = "ABC123XYZ"  
+    """
+    CODE_VERIFY = "ABC123XYZ"
+
     st.markdown("""
     <div class="banner">
-        <div class="banner-badge">Inteligencia Artificial · Vision por Computador</div>
+        <div class="banner-badge">Inteligencia Artificial · Vision por Computador· Código: {CODIGO_VERIFICACION}</div>
         <div class="banner-title">♻️ Sistema de Deteccion de Material Reciclable</div>
         <div class="banner-subtitle">
             Sube una imagen y el sistema identificara automaticamente los residuos
