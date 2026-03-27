@@ -6,12 +6,18 @@ stages:
 variables:
   IMAGE_NAME: recycle-project
   IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
+    - .venv/
 
 test:
   stage: test
   image: python:3.11
   before_script:
-    - pip install -r requirements.txt
+    - pip install --cache-dir .cache/pip -r requirements.txt
   script:
     - pytest tests/ -v
   only:
@@ -24,6 +30,8 @@ build:
     - docker:24-dind
   variables:
     DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - docker info
   script:
     - docker build -t $IMAGE_NAME:$IMAGE_TAG .
     - docker save $IMAGE_NAME:$IMAGE_TAG | gzip > image.tar.gz
