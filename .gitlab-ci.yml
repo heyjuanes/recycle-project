@@ -12,7 +12,7 @@ test:
   tags:
     - recycle-runner
   script:
-    - echo "Test stage en runner propio"
+    - echo "Test stage - runner propio"
   only:
     - main
 
@@ -22,11 +22,7 @@ build:
     - recycle-runner
   script:
     - docker build -t $IMAGE_NAME:$IMAGE_TAG .
-    - docker save $IMAGE_NAME:$IMAGE_TAG | gzip > image.tar.gz
-  artifacts:
-    paths:
-      - image.tar.gz
-    expire_in: 1 hour
+    - docker save $IMAGE_NAME:$IMAGE_TAG | gzip | ssh root@$DROPLET_IP "cat > /tmp/image.tar.gz"
   only:
     - main
 
@@ -40,7 +36,6 @@ deploy:
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
   script:
-    - scp image.tar.gz root@$DROPLET_IP:/tmp/
     - ssh root@$DROPLET_IP "
         docker load < /tmp/image.tar.gz &&
         docker stop recycle-app || true &&
