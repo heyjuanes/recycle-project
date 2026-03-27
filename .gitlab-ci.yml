@@ -1,4 +1,4 @@
-﻿stages:
+stages:
   - test
   - build
   - deploy
@@ -9,11 +9,12 @@ variables:
 
 test:
   stage: test
-  image: python:3.11
+  tags:
+    - recycle-runner
   before_script:
-    - pip install -r requirements.txt
+    - python3.11 -m pip install -r requirements.txt --break-system-packages
   script:
-    - pytest tests/ -v
+    - python3.11 -m pytest tests/ -v
   only:
     - main
 
@@ -21,6 +22,8 @@ build:
   stage: build
   tags:
     - recycle-runner
+  before_script:
+    - docker info
   script:
     - docker build -t $IMAGE_NAME:$IMAGE_TAG .
     - docker save $IMAGE_NAME:$IMAGE_TAG | gzip > /tmp/image.tar.gz
