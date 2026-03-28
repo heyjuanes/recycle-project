@@ -27,7 +27,9 @@ build:
     - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
   script:
     - docker build -t $IMAGE_NAME:$IMAGE_TAG .
-    - docker save $IMAGE_NAME:$IMAGE_TAG | gzip | ssh root@$DROPLET_IP "cat > /root/image.tar.gz"
+    - docker save $IMAGE_NAME:$IMAGE_TAG | gzip > image.tar.gz
+    - scp image.tar.gz root@$DROPLET_IP:/root/
+    - rm image.tar.gz
   only:
     - main
 
