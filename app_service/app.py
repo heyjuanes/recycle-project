@@ -405,7 +405,7 @@ def main() -> None:
     # Código para la sustentación :)
     CODIGO_VERIFICACION = "74RNAS2"  # ← Cambia esto por el código del profesor
     
-    st.markdown("""
+    st.markdown(f"""
     <div class="banner">
         <div class="banner-badge">Inteligencia Artificial · Vision por Computador · Código: {CODIGO_VERIFICACION}</div>
         <div class="banner-title">♻️ Sistema de Deteccion de Material Reciclable</div>
